@@ -78,7 +78,7 @@ class Ssh2SftpAdaptor implements AdapterInterface
 
         $port = 22;
 
-        if (empty($config['port'])) {
+        if (!empty($config['port'])) {
             $port = $config['port'];
         }
 
