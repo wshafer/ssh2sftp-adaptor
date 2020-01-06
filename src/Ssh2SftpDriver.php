@@ -76,6 +76,12 @@ class Ssh2SftpDriver
         );
     }
 
+    public function isDir(string $dirname): bool
+    {
+        $dirname = $this->getPrefix() . '/' . trim($dirname, '/\\');
+        return is_dir($dirname);
+    }
+
     public function chmod(string $path, int $permissions = 0644)
     {
         return ssh2_sftp_chmod(

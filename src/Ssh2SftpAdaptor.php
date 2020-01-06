@@ -8,6 +8,7 @@ use League\Flysystem\Adapter\Polyfill\StreamedWritingTrait;
 use League\Flysystem\AdapterInterface;
 use League\Flysystem\Config;
 use Psr\Log\LoggerInterface;
+use WShafer\Ssh2SftpAdaptor\Exception\DestinationDirDoesNotExistException;
 use WShafer\Ssh2SftpAdaptor\Exception\InvalidConfigException;
 
 class Ssh2SftpAdaptor implements AdapterInterface
@@ -27,15 +28,10 @@ class Ssh2SftpAdaptor implements AdapterInterface
         ],
     ];
 
-    protected array $configurable = [
-        'root',
-        'host',
-        'port',
-        'username',
-        'password'
-    ];
 
     protected string $root = '';
+
+    protected bool $createDirIfMissing = true;
 
     protected ?LoggerInterface $logger = null;
 
@@ -96,6 +92,10 @@ class Ssh2SftpAdaptor implements AdapterInterface
             return;
         }
 
+        if (!empty($config['skipDirCreation'])) {
+            $this->createDirIfMissing = false;
+        }
+
         $this->root = $config['root'];
     }
 
@@ -148,7 +148,20 @@ class Ssh2SftpAdaptor implements AdapterInterface
     public function ensureFoldersExist($path): bool
     {
         $dirname = dirname($this->getRealPath($path));
-        return $this->driver->mkdir($dirname, $this->permissionMap['dir']['public']);
+
+        $success = $this->driver->isDir($dirname);
+
+        if ($success) {
+            return true;
+        }
+
+        if ($this->createDirIfMissing) {
+            return $this->driver->mkdir($dirname, $this->permissionMap['dir']['public']);
+        }
+
+        throw new DestinationDirDoesNotExistException(
+            "Folder " . $dirname . ' does not exist'
+        );
     }
 
     public function update($path, $contents, Config $config)
