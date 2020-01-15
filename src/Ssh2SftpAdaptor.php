@@ -275,7 +275,16 @@ class Ssh2SftpAdaptor implements AdapterInterface
 
     protected function getRealPath($path): string
     {
-        return '/' . trim($this->root, '/\\') . '/' . ltrim($path, '/\\');
+        $root = trim($this->root, '/\\');
+        $return = '';
+
+        if (!empty($root)) {
+            $return .= '/'.$root;
+        }
+
+        $return .= '/' . ltrim($path, '/\\');
+
+        return $return;
     }
 
     protected function log($level, $message, $context = []): void
